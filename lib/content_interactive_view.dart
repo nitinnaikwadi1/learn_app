@@ -29,7 +29,12 @@ class _ContentInteractiveViewState extends State<ContentInteractiveView>
     var contentJsonFromURL = await http.get(Uri.parse(
         "https://nitinnaikwadi1.github.io/vedeobase/data/learning_app/${widget.whichContent}"));
     final list = json.decode(contentJsonFromURL.body) as List<dynamic>;
-    //list.shuffle();
+
+    if (widget.whichContent != 'alphabets.json' ||
+        widget.whichContent != 'numbers.json') {
+      list.shuffle();
+    }
+
     setState(() {
       contentData = list;
     });
@@ -124,7 +129,7 @@ class _ContentInteractiveViewState extends State<ContentInteractiveView>
                 ),
                 child: SizedBox(
                   child: Image.network(
-                    'https://nitinnaikwadi1.github.io/vedeobase/images/vedeo_app/learning_media/${contentData[whichDataIndex]['url']}',
+                    'https://nitinnaikwadi1.github.io/vedeobase/images/learning_app/learning_media/${contentData[whichDataIndex]['url']}',
                   ),
                 ),
               ),
