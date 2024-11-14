@@ -106,7 +106,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       body: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
-              fit: BoxFit.fill, image: AssetImage("assets/images/back1.gif")),
+              fit: BoxFit.contain,
+              image: AssetImage("assets/images/back1.gif")),
         ),
         child: Center(
           child: FutureBuilder(
@@ -141,9 +142,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                                       builder: (context) =>
                                           ContentInteractiveView(
                                               whichContent:
-                                                  items[index].whichContent,
-                                              whichAudio:
-                                                  items[index].whichAudio),
+                                                  items[index].whichContent),
                                     ));
                               },
                               child: Image.asset(

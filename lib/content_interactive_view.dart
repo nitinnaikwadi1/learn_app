@@ -7,10 +7,9 @@ import 'package:learn_app/model/dashboard_item.dart';
 
 class ContentInteractiveView extends StatefulWidget {
   final String whichContent;
-  final String whichAudio;
 
   const ContentInteractiveView(
-      {super.key, required this.whichContent, required this.whichAudio});
+      {super.key, required this.whichContent});
 
   @override
   State<ContentInteractiveView> createState() => _ContentInteractiveViewState();
@@ -26,12 +25,12 @@ class _ContentInteractiveViewState extends State<ContentInteractiveView>
   var whichDataIndex = 0;
 
   Future<List<DashboardItem>> readJsonData() async {
+    var contentLink = widget.whichContent;
     var contentJsonFromURL = await http.get(Uri.parse(
-        "https://nitinnaikwadi1.github.io/vedeobase/data/learning_app/${widget.whichContent}"));
+        "https://nitinnaikwadi1.github.io/vedeobase/data/learning_app/$contentLink"));
     final list = json.decode(contentJsonFromURL.body) as List<dynamic>;
 
-    if (widget.whichContent != 'alphabets.json' ||
-        widget.whichContent != 'numbers.json') {
+    if (!(contentLink == "alphabets.json" || contentLink == "numbers.json")) {
       list.shuffle();
     }
 
@@ -115,7 +114,7 @@ class _ContentInteractiveViewState extends State<ContentInteractiveView>
       body: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
-              fit: BoxFit.cover, image: AssetImage("assets/images/back.gif")),
+              fit: BoxFit.fill, image: AssetImage("assets/images/back2.gif")),
         ),
         child: Stack(
           children: <Widget>[
@@ -141,7 +140,7 @@ class _ContentInteractiveViewState extends State<ContentInteractiveView>
                   onTap: () {
                     setState(() {
                       // last index of arr
-                      if (whichDataIndex == contentData.length) {
+                      if (whichDataIndex == contentData.length - 1) {
                         whichDataIndex = 0;
                       } else {
                         whichDataIndex += 1;
