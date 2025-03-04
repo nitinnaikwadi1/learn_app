@@ -1,0 +1,10 @@
+const String learningAppBaseUrl = "https://nitinnaikwadi1.github.io/vedeobase/";
+const String learningAppAssetBase = "assets/";
+const String learningAppDashboardUrl = "${learningAppBaseUrl}data/learning_app/learning_app_dashboard.json";
+const String learningAppContentUrl = "${learningAppBaseUrl}data/learning_app/";
+const String learningAppDashboardItemsUrl = "${learningAppAssetBase}images/dashboard/";
+const String learningAppBackMusicUrl = "${learningAppAssetBase}audio/backg_audio.mp3";
+const String learningAppDashboardBackgcUrl = "${learningAppAssetBase}images/back1.gif";
+const String learningAppContentBackgcUrl = "${learningAppAssetBase}images/back2.gif";
+const String learningAppContentMediaUrl = "${learningAppBaseUrl}images/learning_app/learning_media/";
+const String learningAppTapActionAssetUrl = "${learningAppAssetBase}animations/tap_button_yellow.json";

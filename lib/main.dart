@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:just_audio/just_audio.dart';
 import 'package:learn_app/model/dashboard_item_list.dart';
 import 'package:learn_app/content_interactive_view.dart';
+import 'package:learn_app/properties/app_constants.dart' as properties;
 
 void main() {
   runApp(const MyApp());
@@ -31,7 +32,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
   Future<List<DashboardItemlist>> readJsonData() async {
     var vedeoJsonFromURL = await http.get(Uri.parse(
-        "https://nitinnaikwadi1.github.io/vedeobase/data/learning_app/learning_app_dashboard.json"));
+        properties.learningAppDashboardUrl));
     final list = json.decode(vedeoJsonFromURL.body) as List<dynamic>;
     list.shuffle();
     return list.map((e) => DashboardItemlist.fromJson(e)).toList();
@@ -97,7 +98,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
             if (backgroundMusicFlag) {
               await backgroundMusicPlayer
-                  .setAsset('assets/audio/backg_audio.mp3');
+                  .setAsset(properties.learningAppBackMusicUrl);
               backgroundMusicPlayer.play();
             } else {
               backgroundMusicPlayer.stop();
@@ -107,7 +108,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         decoration: const BoxDecoration(
           image: DecorationImage(
               fit: BoxFit.contain,
-              image: AssetImage("assets/images/back1.gif")),
+              image: AssetImage(properties.learningAppDashboardBackgcUrl)),
         ),
         child: Center(
           child: FutureBuilder(
@@ -146,7 +147,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                                     ));
                               },
                               child: Image.asset(
-                                  'assets/images/dashboard/${items[index].url}',
+                                  "${properties.learningAppDashboardItemsUrl}${items[index].url}",
                                   fit: BoxFit.contain),
                             ),
                           );

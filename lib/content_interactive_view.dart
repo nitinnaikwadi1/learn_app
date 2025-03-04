@@ -4,12 +4,13 @@ import 'package:lottie/lottie.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:http/http.dart' as http;
 import 'package:learn_app/model/dashboard_item.dart';
+import 'package:learn_app/properties/app_constants.dart' as properties;
+
 
 class ContentInteractiveView extends StatefulWidget {
   final String whichContent;
 
-  const ContentInteractiveView(
-      {super.key, required this.whichContent});
+  const ContentInteractiveView({super.key, required this.whichContent});
 
   @override
   State<ContentInteractiveView> createState() => _ContentInteractiveViewState();
@@ -26,8 +27,9 @@ class _ContentInteractiveViewState extends State<ContentInteractiveView>
 
   Future<List<DashboardItem>> readJsonData() async {
     var contentLink = widget.whichContent;
+    
     var contentJsonFromURL = await http.get(Uri.parse(
-        "https://nitinnaikwadi1.github.io/vedeobase/data/learning_app/$contentLink"));
+       properties.learningAppContentUrl + contentLink));
     final list = json.decode(contentJsonFromURL.body) as List<dynamic>;
 
     if (!(contentLink == "alphabets.json" || contentLink == "numbers.json")) {
@@ -105,7 +107,7 @@ class _ContentInteractiveViewState extends State<ContentInteractiveView>
 
             if (backgroundMusicFlag) {
               await backgroundMusicPlayer
-                  .setAsset('assets/audio/backg_audio.mp3');
+                  .setAsset(properties.learningAppBackMusicUrl);
               backgroundMusicPlayer.play();
             } else {
               backgroundMusicPlayer.stop();
@@ -114,7 +116,7 @@ class _ContentInteractiveViewState extends State<ContentInteractiveView>
       body: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
-              fit: BoxFit.fill, image: AssetImage("assets/images/back2.gif")),
+              fit: BoxFit.fill, image: AssetImage(properties.learningAppContentBackgcUrl)),
         ),
         child: Stack(
           children: <Widget>[
@@ -128,8 +130,21 @@ class _ContentInteractiveViewState extends State<ContentInteractiveView>
                 ),
                 child: SizedBox(
                   child: Image.network(
-                    'https://nitinnaikwadi1.github.io/vedeobase/images/learning_app/learning_media/${contentData[whichDataIndex]['url']}',
+                    '${properties.learningAppContentMediaUrl}${contentData[whichDataIndex]['url']}',
                   ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 360.0),
+              child: Center(
+                child: Text(
+                  contentData[whichDataIndex]['name'],
+                  style: const TextStyle(
+                    fontSize: 24,
+                    color: Colors.black26,
+                    fontWeight: FontWeight.w500,
+                  ), //Textstyle
                 ),
               ),
             ),
@@ -148,7 +163,7 @@ class _ContentInteractiveViewState extends State<ContentInteractiveView>
                     });
                   },
                   child: Lottie.asset(
-                      "assets/animations/tap_button_yellow.json",
+                      properties.learningAppTapActionAssetUrl,
                       height: 252,
                       width: 252,
                       controller: _controller),
