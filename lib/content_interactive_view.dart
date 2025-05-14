@@ -1,11 +1,14 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
-import 'package:just_audio/just_audio.dart';
 import 'package:http/http.dart' as http;
 import 'package:learn_app/model/dashboard_item.dart';
 import 'package:learn_app/properties/app_constants.dart' as properties;
-
+import 'package:learn_app/theme/circle_action_button_widget.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:avatar_glow/avatar_glow.dart';
+import 'package:loading_indicator/loading_indicator.dart';
+import 'package:flutter_glow/flutter_glow.dart';
+import 'package:flutter_shake_animated/flutter_shake_animated.dart';
 
 class ContentInteractiveView extends StatefulWidget {
   final String whichContent;
@@ -18,18 +21,21 @@ class ContentInteractiveView extends StatefulWidget {
 
 class _ContentInteractiveViewState extends State<ContentInteractiveView>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
-  late AudioPlayer backgroundMusicPlayer;
-  bool backgroundMusicFlag = false;
-  late final AnimationController _controller;
   bool clicked = false;
   var contentData = [];
   var whichDataIndex = 0;
+  late AudioPlayer contentPlayer;
+  bool contentAudioFlag = true;
+  String randomObjectFrame1 = '';
+  String randomObjectFrame2 = '';
+  String contentImage = '';
+  String contentBackgImage = '';
 
   Future<List<DashboardItem>> readJsonData() async {
     var contentLink = widget.whichContent;
-    
-    var contentJsonFromURL = await http.get(Uri.parse(
-       properties.learningAppContentUrl + contentLink));
+
+    var contentJsonFromURL = await http
+        .get(Uri.parse(properties.learningAppContentUrl + contentLink));
     final list = json.decode(contentJsonFromURL.body) as List<dynamic>;
 
     if (!(contentLink == "alphabets.json" || contentLink == "numbers.json")) {
@@ -39,24 +45,62 @@ class _ContentInteractiveViewState extends State<ContentInteractiveView>
     setState(() {
       contentData = list;
     });
+
+    whichDataIndex = 0;
+    if (contentAudioFlag) {
+      contentPlayer.setUrl(properties.learningAppContentAudioUrl +
+          contentData[whichDataIndex]['audio']);
+      contentPlayer.play();
+    } else {
+      contentPlayer.stop();
+    }
+
+    contentImage = contentData[whichDataIndex]['url'];
+
     return list.map((e) => DashboardItem.fromJson(e)).toList();
+  }
+
+  Future<void> randomObjectsFramesData() async {
+    var randomAnimalFramesJsonFromURL =
+        await http.get(Uri.parse(properties.learningAppRandomFramesDataUrl));
+    var randomAnimalsFramesList =
+        json.decode(randomAnimalFramesJsonFromURL.body) as List<dynamic>;
+    randomAnimalsFramesList.shuffle();
+
+    setState(() {
+      randomObjectFrame1 = randomAnimalsFramesList[0]['url'];
+      randomObjectFrame2 = randomAnimalsFramesList[1]['url'];
+    });
+  }
+
+  Future<void> randomBackgroundImageData() async {
+    var randomContentBackgJsonFromURL =
+        await http.get(Uri.parse(properties.learningAppBackgroundFramesUrl));
+    var randomContentBackgList =
+        json.decode(randomContentBackgJsonFromURL.body) as List<dynamic>;
+    randomContentBackgList.shuffle();
+
+    setState(() {
+      contentBackgImage = randomContentBackgList[0]['url'];
+    });
   }
 
   @override
   void initState() {
     super.initState();
+    contentPlayer = AudioPlayer();
+    contentPlayer.setSpeed(0.88);
+    contentPlayer.setLoopMode(LoopMode.all);
+
     WidgetsBinding.instance.addObserver(this);
-    backgroundMusicPlayer = AudioPlayer();
-    _controller =
-        AnimationController(vsync: this, duration: Durations.extralong4);
-    _controller.repeat();
     readJsonData();
-    whichDataIndex = 0;
+    randomObjectsFramesData();
+    randomBackgroundImageData();
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    contentPlayer.dispose();
     super.dispose();
   }
 
@@ -67,12 +111,12 @@ class _ContentInteractiveViewState extends State<ContentInteractiveView>
     if (state == AppLifecycleState.inactive ||
         state == AppLifecycleState.detached ||
         state == AppLifecycleState.paused) {
-      backgroundMusicPlayer.stop();
+      contentPlayer.stop();
     }
 
     if (state == AppLifecycleState.resumed) {
-      if (backgroundMusicFlag) {
-        backgroundMusicPlayer.play();
+      if (contentAudioFlag) {
+        contentPlayer.play();
       }
     }
   }
@@ -81,120 +125,193 @@ class _ContentInteractiveViewState extends State<ContentInteractiveView>
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      floatingActionButton: FloatingActionButton.small(
-          backgroundColor: Colors.white,
-          child: Material(
-            shape: const CircleBorder(),
-            child: Card(
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(35.0),
-              ),
-              child: Icon(
-                backgroundMusicFlag
-                    ? Icons.volume_up_rounded
-                    : Icons.volume_off_rounded,
-                color: Colors.green,
-                size: 24,
-              ),
-            ),
-          ),
-          onPressed: () async {
-            // flag to toggle the background music icon
-            setState(() {
-              backgroundMusicFlag = !backgroundMusicFlag;
-            });
-
-            if (backgroundMusicFlag) {
-              await backgroundMusicPlayer
-                  .setAsset(properties.learningAppBackMusicUrl);
-              backgroundMusicPlayer.play();
-            } else {
-              backgroundMusicPlayer.stop();
-            }
-          }),
-      body: Container(
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-              fit: BoxFit.fill, image: AssetImage(properties.learningAppContentBackgcUrl)),
-        ),
-        child: Stack(
-          children: <Widget>[
-            Center(
-              child: Card(
-                elevation: 10,
-                semanticContainer: true,
-                clipBehavior: Clip.antiAliasWithSaveLayer,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: SizedBox(
-                  child: Image.network(
-                    '${properties.learningAppContentMediaUrl}${contentData[whichDataIndex]['url']}',
-                  ),
+      body: contentBackgImage == '' || contentImage == ''
+          ? const LoadingIndicator(
+              colors: properties.kDefaultRainbowColors,
+              indicatorType: Indicator.pacman,
+              strokeWidth: 3,
+              pause: false,
+            )
+          : Container(
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  fit: BoxFit.fill,
+                  image: AssetImage(
+                      "${properties.learningAppBackgroundItemsUrl}$contentBackgImage"),
                 ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 360.0),
-              child: Center(
-                child: Text(
-                  contentData[whichDataIndex]['name'],
-                  style: const TextStyle(
-                    fontSize: 24,
-                    color: Colors.black26,
-                    fontWeight: FontWeight.w500,
-                  ), //Textstyle
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: 300.0),
-              child: Center(
-                child: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      // last index of arr
-                      if (whichDataIndex == contentData.length - 1) {
-                        whichDataIndex = 0;
-                      } else {
-                        whichDataIndex += 1;
-                      }
-                    });
-                  },
-                  child: Lottie.asset(
-                      properties.learningAppTapActionAssetUrl,
-                      height: 252,
-                      width: 252,
-                      controller: _controller),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(10.0),
-              child: Align(
-                alignment: Alignment.bottomLeft,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(35.0),
+              child: Stack(
+                children: <Widget>[
+                  Center(
+                    child: ShakeWidget(
+                      shakeConstant: ShakeSlowConstant1(),
+                      autoPlay: true,
+                      child: Card(
+                        elevation: 20,
+                        semanticContainer: true,
+                        clipBehavior: Clip.antiAliasWithSaveLayer,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                          side: const BorderSide(
+                            strokeAlign: BorderSide.strokeAlignInside,
+                            color: Colors.pinkAccent,
+                            width: 3.0,
+                          ),
+                        ),
+                        child: SizedBox(
+                          child: Image.network(
+                            '${properties.learningAppContentMediaUrl}$contentImage',
+                            loadingBuilder: (BuildContext context, Widget child,
+                                ImageChunkEvent? loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return const LoadingIndicator(
+                                colors: properties.kDefaultRainbowColors,
+                                indicatorType: Indicator.pacman,
+                                strokeWidth: 3,
+                                pause: false,
+                              );
+                            },
+                          ),
+                        ),
+                      ),
                     ),
-                    padding: const EdgeInsets.all(15),
                   ),
-                  child: const Icon(
-                    Icons.arrow_back_rounded,
-                    color: Colors.green,
-                    size: 24,
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 365.0),
+                    child: Center(
+                      child: GlowText(
+                        contentData[whichDataIndex]['name'],
+                        style: const TextStyle(
+                          fontSize: 50,
+                          fontStyle: FontStyle.italic,
+                          color: Colors.black54,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 440.0),
+                    child: Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          AvatarGlow(
+                            glowColor: Colors.pinkAccent,
+                            child: CircularActionButton(
+                              onPressed: () async {
+                                setState(() {
+                                  // last index of arr
+                                  if (whichDataIndex ==
+                                      contentData.length - 1) {
+                                    whichDataIndex = 0;
+                                  } else {
+                                    whichDataIndex += 1;
+                                  }
+                                  contentImage =
+                                      contentData[whichDataIndex]['url'];
+                                });
+                                if (contentAudioFlag) {
+                                  await contentPlayer.setUrl(
+                                      properties.learningAppContentAudioUrl +
+                                          contentData[whichDataIndex]['audio']);
+                                  contentPlayer.play();
+                                } else {
+                                  contentPlayer.stop();
+                                }
+                              },
+                              icon: const Icon(
+                                Icons.swipe_vertical_outlined,
+                                color: Colors.pinkAccent,
+                              ),
+                              iconSize: 52,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(15.0),
+                    child: Align(
+                      alignment: Alignment.topLeft,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(25.0),
+                          ),
+                          padding: const EdgeInsets.all(15),
+                        ),
+                        child: const Icon(
+                          Icons.arrow_back_rounded,
+                          color: Colors.green,
+                          size: 32,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(15.0),
+                    child: Align(
+                      alignment: Alignment.topRight,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          // flag to toggle the content audio flag
+                          setState(() {
+                            contentAudioFlag = !contentAudioFlag;
+                          });
+
+                          if (contentAudioFlag) {
+                            contentPlayer.play();
+                          } else {
+                            contentPlayer.stop();
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(25.0),
+                          ),
+                          padding: const EdgeInsets.all(15),
+                        ),
+                        child: Icon(
+                          contentAudioFlag
+                              ? Icons.volume_up_rounded
+                              : Icons.volume_off_rounded,
+                          color: Colors.amber,
+                          size: 32,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Align(
+                        alignment: Alignment.bottomLeft,
+                        child: SizedBox(
+                          width: 198,
+                          child: Image.network(
+                            "${properties.learningAppRandomFramesUrl}$randomObjectFrame1",
+                          ),
+                        ),
+                      ),
+                      Align(
+                        alignment: Alignment.bottomRight,
+                        child: SizedBox(
+                          width: 198,
+                          child: Image.network(
+                            "${properties.learningAppRandomFramesUrl}$randomObjectFrame2",
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
     );
   }
 }
